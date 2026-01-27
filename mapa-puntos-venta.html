@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puntos de Venta - Cooplafamilia</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        
+        .header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #2c5f2d;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .leaflet-popup-content {
+            margin: 0;
+            width: 320px !important;
+        }
+        
+        .popup-header {
+            background: linear-gradient(135deg, #2c5f2d 0%, #4a7c4e 100%);
+            color: white;
+            padding: 15px;
+        }
+        
+        .popup-header h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .popup-header .tipo {
+            font-size: 12px;
+            opacity: 0.9;
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .popup-body {
+            padding: 15px;
+        }
+        
+        .popup-foto {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+        
+        .info-row {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .info-row strong {
+            color: #2c5f2d;
+            min-width: 80px;
+            font-size: 13px;
+        }
+        
+        .info-row span {
+            color: #444;
+            font-size: 13px;
+        }
+        
+        .btn-whatsapp {
+            display: inline-block;
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn-whatsapp:hover {
+            background: #20ba5a;
+        }
+        
+        .btn-instagram {
+            display: inline-block;
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+            margin-left: 5px;
+            transition: opacity 0.3s;
+        }
+        
+        .btn-instagram:hover {
+            opacity: 0.9;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 13px;
+        }
+        
+        .legend h4 {
+            margin-bottom: 10px;
+            color: #2c5f2d;
+        }
+        
+        .legend-item {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        /* Colores para diferentes tipos */
+        .marker-supermercado {
+            background-color: #e74c3c;
+        }
+        
+        .marker-almacen {
+            background-color: #3498db;
+        }
+        
+        .marker-otro {
+            background-color: #f39c12;
+        }
+        
+        .marker-carrito {
+            background-color: #9b59b6;
+        }
+        
+        .marker-revendedor {
+            background-color: #1abc9c;
+        }
+        
+        @media (max-width: 600px) {
+            .header {
+                width: 90%;
+                padding: 10px 15px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .header p {
+                font-size: 12px;
+            }
+            
+            .legend {
+                font-size: 11px;
+                padding: 10px;
+            }
+            
+            .leaflet-popup-content {
+                width: 280px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧀 Puntos de Venta Cooplafamilia</h1>
+        <p>Hacé click en los marcadores para ver la información</p>
+    </div>
+    
+    <div class="legend">
+        <h4>Tipos de Establecimiento</h4>
+        <div class="legend-item">
+            <div class="legend-color marker-supermercado"></div>
+            <span>Supermercado</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color marker-almacen"></div>
+            <span>Almacén / Mercado</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color marker-otro"></div>
+            <span>Panadería / Pizzería</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color marker-carrito"></div>
+            <span>Carrito / Chipero</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color marker-revendedor"></div>
+            <span>Revendedor</span>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    
+    <script>
+        // Datos de puntos de venta
+        const puntosVenta = [{"lat": -27.003065, "lng": -54.499997, "nombre": "Dos Gustavo", "tipo": "Supermercado", "productos": "Tybo, Cremoso, Ricotta Prensada", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=5bbe27be-ab69-4951-a730-1c0aa3c090fe_1768250795.jpg"},{"lat": -26.983897, "lng": -54.479437, "nombre": "Kiosco barrio Juan Pablo ll", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Juan", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=38c9daf3-f314-4fd7-a503-815572d5173e_1768249337.jpg"},{"lat": -26.968515, "lng": -54.474728, "nombre": "Aeroclub kiosco", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Paola", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=91a321ed-9f00-4009-9456-a57ffeeb6f05_1768248776.jpg"},{"lat": -26.974222, "lng": -54.472102, "nombre": "Kiosco Sarmiento", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Vander", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=7c81d245-7a0c-485c-8c74-5310d89c51bb_1768248291.jpg"},{"lat": -26.977678, "lng": -54.475278, "nombre": "Kiosco Progreso", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo, Ricotta Prensada", "telefono": "3755", "contacto": "Ines", "instagram": "", "foto": ""},{"lat": -26.978505, "lng": -54.474213, "nombre": "Despensa Aylen", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=5e72b7dd-ba8f-40bf-90f1-d4d343e121f4_1768247744.jpg"},{"lat": -26.979303, "lng": -54.471828, "nombre": "Kiosco Los Cedro", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=7ff54cf6-7906-42cb-96c7-fc102c7b8c2f_1768247542.jpg"},{"lat": -26.979482, "lng": -54.471577, "nombre": "Kiosco Lusmila y Leo", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": ""},{"lat": -26.980216, "lng": -54.471706, "nombre": "Kiosko", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": ""},{"lat": -26.981091, "lng": -54.471762, "nombre": "Kiosko Luján", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Luján", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=fb2e6e36-b7ab-4322-bf66-6a193fcd7d8a_1768247186.jpg"},{"lat": -26.98364, "lng": -54.475709, "nombre": "Distribuidora Kroch", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=b04de849-bc36-4ea0-98a1-120f9835dd16_1768246601.jpg"},{"lat": -26.984425, "lng": -54.474284, "nombre": "Minimercado Andrea", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=c6aecd6e-2897-46bd-b21a-e9b723169e86_1768246432.jpg"},{"lat": -26.98797, "lng": -54.475475, "nombre": "Minimercado Linaje Barrio Hospital", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=ce299114-a709-41ff-a891-3fa74812ab9b_1768246188.jpg"},{"lat": -26.992223, "lng": -54.47195, "nombre": "Barrio Los Obreros", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=97a0e39f-79b2-47ca-94a9-dbe83856f9d6_1768245883.jpg"},{"lat": -26.995433, "lng": -54.475733, "nombre": "Chipa Mario", "tipo": "Carrito / Chipero", "productos": "Tybo", "telefono": "3755", "contacto": "Mario", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=aaf4d6a8-7b38-4c4e-a1dd-bd006d72adf3_1768243880.jpg"},{"lat": -26.998938, "lng": -54.485293, "nombre": "Pizza Pop", "tipo": "Otro", "productos": "Mozzarella, Cremoso", "telefono": "3755694605", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=54bf05c0-b559-4fcd-a2dc-3339275970be_1768242019.jpg"},{"lat": -27.01176, "lng": -54.467592, "nombre": "Minutas La Familia", "tipo": "Carrito / Chipero", "productos": "Cremoso", "telefono": "3755", "contacto": "Pamela", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=2b9529b1-1904-4052-9564-c7d10baa61f6_1768233332.jpg"},{"lat": -27.00394, "lng": -54.470357, "nombre": "Maria San Cayetano", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Maria", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=28a1bec4-95a4-44de-b84e-4a83b4a41d2e_1768232499.jpg"},{"lat": -27.001985, "lng": -54.468438, "nombre": "Mario barrio San Cayetano", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Mario", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=47697d6e-9a79-4e43-b553-3c73ae5dbba0_1768232344.jpg"},{"lat": -27.002063, "lng": -54.471038, "nombre": "Mercado", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=5a4bd628-661a-4597-9a64-adce987b16e2_1768232035.jpg"},{"lat": -27.000812, "lng": -54.479908, "nombre": "Verdulería La Esquina", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=4fd9cbfe-6f78-405a-ba9a-332f18a8c959_1768231661.jpg"},{"lat": -26.996355, "lng": -54.48547, "nombre": "Pizzería Tío Fabi", "tipo": "Otro", "productos": "Tybo, Mozzarella", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=97b9780a-d468-4942-84c8-a1753c2b48b3_1768231102.jpg"},{"lat": -26.995535, "lng": -54.483589, "nombre": "Frutería Centro", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=ebf67367-fc35-4d8f-a474-f01286e13906_1768230804.jpg"},{"lat": -26.995832, "lng": -54.484183, "nombre": "Panadería Vicente", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Nando", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=5cf486d6-40d7-4f02-a5e4-77f0dcaa4cff_1768230587.jpg"},{"lat": -26.999963, "lng": -54.491443, "nombre": "Panadería Estilo Caserito", "tipo": "Otro", "productos": "Tybo", "telefono": "3755646736", "contacto": "", "instagram": "Estilo_Caserito", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=f3655de4-8717-4ee2-a72e-75b246822620_1768230200.jpg"},{"lat": -26.996692, "lng": -54.48935, "nombre": "Coton", "tipo": "Supermercado", "productos": "Tybo, Cremoso, Ricotta Prensada", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=60036ca8-36b7-473f-aba8-a376f3226f8e_1768229746.jpg"},{"lat": -26.996767, "lng": -54.489228, "nombre": "Panadería Rosa", "tipo": "Otro", "productos": "Tybo", "telefono": "3755", "contacto": "Rosa", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=50020676-cd0e-4956-b0c1-dc55091bde36_1768229662.jpg"},{"lat": -26.993775, "lng": -54.485558, "nombre": "SanJosé", "tipo": "Supermercado", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Rosa", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=27d8ba2d-84aa-48ba-9e8f-7adc7094c7d3_1768229350.jpg"},{"lat": -26.993047, "lng": -54.482988, "nombre": "El Toto", "tipo": "Supermercado", "productos": "Tybo, Cremoso, Ricotta Prensada", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=314bd851-c42a-46b0-b948-eda22834f485_1768229183.jpg"},{"lat": -26.989732, "lng": -54.483188, "nombre": "Ceferino Ruta 14", "tipo": "Supermercado", "productos": "Ricotta Prensada", "telefono": "3755", "contacto": "Norna", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=ffe02774-9adb-4f9e-a994-30060a12e228_1768228070.jpg"},{"lat": -26.989748, "lng": -54.47834, "nombre": "Sandro s", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=186d89af-8790-4803-837c-3bd34306c825_1768227910.jpg"},{"lat": -26.99011, "lng": -54.478428, "nombre": "Cari Sol", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": ""},{"lat": -26.992473, "lng": -54.479405, "nombre": "Súper Chingo", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=ca521282-7b33-4136-bbb9-2c9bf3fceb82_1768227191.jpg"},{"lat": -26.992882, "lng": -54.479578, "nombre": "Oscar Autoservicio", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755239051", "contacto": "Oscar", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=f564955a-76ae-46dd-8ae6-9302c958ba34_1768226729.jpg"},{"lat": -26.995078, "lng": -54.479702, "nombre": "Morfi Santi", "tipo": "Otro", "productos": "Tybo", "telefono": "3755629697", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=0e4336ac-2ed0-4dc0-9ce6-4ce6a7859b78_1768226368.jpg"},{"lat": -27.003188, "lng": -54.478517, "nombre": "De todo un poco", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=0191149c-ca59-41ed-b93a-3d4ea0c76187_1768224734.jpg"},{"lat": -27.008123, "lng": -54.4739, "nombre": "Despensa Débora", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Débora", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=76cc65f4-2a07-464f-af3b-99e58d5f8f10_1768224114.jpg"},{"lat": -27.012715, "lng": -54.464905, "nombre": "Distribuidora Paola", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Paola", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=48a15e6f-6cfa-4687-a809-a8fcb826511f_1768222358.jpg"},{"lat": -27.016102, "lng": -54.461882, "nombre": "Despensa Nueva Esperanza", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": ""},{"lat": -27.011035, "lng": -54.461553, "nombre": "Carnicería Lider", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Patricia", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=e550d68b-b546-4efe-a13c-eabf2a12b54c_1768221843.jpg"},{"lat": -27.010283, "lng": -54.460865, "nombre": "LyS", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso, Tybo", "telefono": "3755", "contacto": "Hugo", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=ec97516d-3986-45c5-8ebd-4c5c8a6ba9de_1768221269.jpg"},{"lat": -27.009887, "lng": -54.460512, "nombre": "Despensa Don Pedro", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso", "telefono": "3755", "contacto": "Pedro", "instagram": "", "foto": ""},{"lat": -27.013657, "lng": -54.45269, "nombre": "Kiosco km 48", "tipo": "Almacen / Mercado de cercanía", "productos": "Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=f44aa223-294d-4284-917a-f1bcda8a8e39_1768220575.jpg"},{"lat": -27.014808, "lng": -54.451367, "nombre": "Km 48", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=9c52226a-2819-4f67-ba6b-9415aac6339f_1768220434.jpg"},{"lat": -27.296023, "lng": -54.211457, "nombre": "Bella Vista", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Yani", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=594a64f3-f781-47f0-a5eb-5233f25eb77e_1766501723.jpg"},{"lat": -27.295198, "lng": -54.200741, "nombre": "Esperinho Pau no Gato", "tipo": "Otro", "productos": "Mozzarella, Tybo", "telefono": "3755665943", "contacto": "Damer", "instagram": "espetinhoselsoberbio", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=e2ea71d9-7c21-4bda-b52c-e67d5ef8763b_1766500906.jpg"},{"lat": -27.295112, "lng": -54.20066, "nombre": "Comedo Messer", "tipo": "Otro", "productos": "Tybo, Cremoso, Mozzarella", "telefono": "3764737324", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=c49c6485-5608-4083-bf73-88eb47df2c1e_1766500692.jpg"},{"lat": -27.295251, "lng": -54.198289, "nombre": "Ceferino", "tipo": "Supermercado", "productos": "Ricotta Prensada, Tybo", "telefono": "3755", "contacto": "Karina fiambreria", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=0ed9df08-f70f-44dd-8336-75aa93775a22_1766500295.jpg"},{"lat": -27.293913, "lng": -54.198318, "nombre": "Thomas", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=65282819-a202-4f8b-9cc8-cb86c90178b4_1766499376.jpg"},{"lat": -27.293755, "lng": -54.198348, "nombre": "Al lado procampo", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=d6677e7e-aede-43f6-a69e-bee4f3e05580_1766499323.jpg"},{"lat": -27.290718, "lng": -54.19856, "nombre": "Bar Avenida", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Geronimo", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=94961436-a26f-4456-b50b-845228b5375f_1766499195.jpg"},{"lat": -27.28955, "lng": -54.19848, "nombre": "Cecilia", "tipo": "Revendedor", "productos": "Tybo, Ricotta Prensada, Mozzarella, Cremoso", "telefono": "3755", "contacto": "Cecilia", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=bcfdbae5-3df5-4e80-8af7-38ec782ad223_1766498892.jpg"},{"lat": -27.291062, "lng": -54.197356, "nombre": "Tuti Klein", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=254dbac6-c300-46d0-b512-62dcf561f130_1766498728.jpg"},{"lat": -27.29208, "lng": -54.196097, "nombre": "Neneco Vinos", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso", "telefono": "3755773932", "contacto": "Neneco", "instagram": "Neneco_vinos", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=447698fd-9dbd-46ea-b648-fde4304544d6_1766498485.jpg"},{"lat": -27.297568, "lng": -54.195202, "nombre": "La Costa", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755343222", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=25920199-8cd5-4594-9ae7-4fe1cf4fb8f1_1766497950.jpg"},{"lat": -27.300792, "lng": -54.193938, "nombre": "Comedor Terminal", "tipo": "Otro", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=f29c7f4e-fcc8-4bda-81a5-38b456019039_1766497683.jpg"},{"lat": -27.299203, "lng": -54.197163, "nombre": "Panadería El Soberbio", "tipo": "Otro", "productos": "Tybo, Mozzarella", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=7f50edab-42be-409a-a0a7-747a384b53d5_1766497191.jpg"},{"lat": -27.300023, "lng": -54.197733, "nombre": "Panadería Dolice", "tipo": "Otro", "productos": "Tybo", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=44d5834b-dcbc-464d-b3d9-aa488be73415_1766496950.jpg"},{"lat": -27.300842, "lng": -54.19769, "nombre": "Avenida", "tipo": "Otro", "productos": "Tybo", "telefono": "3755224346", "contacto": "", "instagram": "panaderiaavenida26", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=561487e5-c89e-433d-98bd-ea289e3dc35f_1766496365.jpg"},{"lat": -27.298105, "lng": -54.200588, "nombre": "Los Mellis", "tipo": "Almacen / Mercado de cercanía", "productos": "Tybo, Cremoso, Mozzarella", "telefono": "3764758908", "contacto": "", "instagram": "", "foto": ""},{"lat": -27.298222, "lng": -54.20185, "nombre": "Maestra Wilma deFreitas", "tipo": "Carrito / Chipero", "productos": "Tybo, Ricotta Prensada", "telefono": "3755", "contacto": "Wilma", "instagram": "", "foto": ""},{"lat": -27.296348, "lng": -54.200933, "nombre": "La Familia", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "Gilmar", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=b65edc82-6a71-455b-8f0c-9a3cd378ac99_1766495525.jpg"},{"lat": -27.295432, "lng": -54.200092, "nombre": "Autoservicio Rivadavia", "tipo": "Supermercado", "productos": "Tybo, Cremoso", "telefono": "3755", "contacto": "", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=70624525-c348-43b2-b661-540741adb59c_1766495119.jpg"},{"lat": -27.29575, "lng": -54.199395, "nombre": "Panadería Tony", "tipo": "Otro", "productos": "Tybo", "telefono": "3755", "contacto": "Tony", "instagram": "", "foto": ""},{"lat": -25.60539, "lng": -54.574685, "nombre": "Iguazú", "tipo": "Revendedor", "productos": "Tybo, Cremoso, Mozzarella, Ricotta Prensada", "telefono": "375555555", "contacto": "Pirulo", "instagram": "", "foto": "https://five.epicollect.net/api/media/puntos-venta-cooplafamilia?type=photo&format=entry_original&name=51cbfa87-4023-4d3c-8567-088dbd568e77_1762866413.jpg"},{"lat": -27.214655, "lng": -54.198354, "nombre": "Martín", "tipo": "Socios / Funcionarios", "productos": "Tybo, Cremoso, Mozzarella, Ricotta Prensada", "telefono": "3755710396", "contacto": "Martin", "instagram": "", "foto": ""}];
+
+        // Función para obtener color según tipo de establecimiento
+        function getMarkerColor(tipo) {
+            if (tipo.includes('Supermercado')) return '#e74c3c';
+            if (tipo.includes('Almacen') || tipo.includes('Mercado')) return '#3498db';
+            if (tipo.includes('Carrito') || tipo.includes('Chipero')) return '#9b59b6';
+            if (tipo.includes('Revendedor')) return '#1abc9c';
+            return '#f39c12'; // Otro
+        }
+
+        // Crear icono personalizado
+        function createCustomIcon(color) {
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background-color: ${color};
+                    width: 25px;
+                    height: 25px;
+                    border-radius: 50% 50% 50% 0;
+                    border: 3px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    transform: rotate(-45deg);
+                "></div>`,
+                iconSize: [25, 25],
+                iconAnchor: [12, 25],
+                popupAnchor: [0, -25]
+            });
+        }
+
+        // Inicializar mapa
+        const map = L.map('map').setView([-27.0, -54.47], 12);
+
+        // Agregar capa de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Crear grupo de marcadores con clustering
+        const markers = L.markerClusterGroup({
+            maxClusterRadius: 50,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+        });
+
+        // Agregar marcadores
+        puntosVenta.forEach(punto => {
+            const color = getMarkerColor(punto.tipo);
+            const icon = createCustomIcon(color);
+            
+            // Crear contenido del popup
+            let popupContent = `
+                <div class="popup-header">
+                    <h3>${punto.nombre}</h3>
+                    <span class="tipo">${punto.tipo}</span>
+                </div>
+                <div class="popup-body">
+            `;
+            
+            if (punto.foto) {
+                popupContent += `<img src="${punto.foto}" class="popup-foto" alt="${punto.nombre}">`;
+            }
+            
+            popupContent += `<div class="info-row"><strong>Productos:</strong> <span>${punto.productos}</span></div>`;
+            
+            if (punto.contacto) {
+                popupContent += `<div class="info-row"><strong>Contacto:</strong> <span>${punto.contacto}</span></div>`;
+            }
+            
+            if (punto.telefono && punto.telefono.length > 3) {
+                const whatsappLink = `https://wa.me/549${punto.telefono}`;
+                popupContent += `<a href="${whatsappLink}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>`;
+            }
+            
+            if (punto.instagram) {
+                const instagramLink = `https://instagram.com/${punto.instagram}`;
+                popupContent += `<a href="${instagramLink}" target="_blank" class="btn-instagram">📷 Instagram</a>`;
+            }
+            
+            popupContent += '</div>';
+            
+            const marker = L.marker([punto.lat, punto.lng], { icon: icon })
+                .bindPopup(popupContent, {
+                    maxWidth: 320,
+                    className: 'custom-popup'
+                });
+            
+            markers.addLayer(marker);
+        });
+
+        map.addLayer(markers);
+
+        // Ajustar vista para mostrar todos los marcadores
+        if (puntosVenta.length > 0) {
+            const bounds = L.latLngBounds(puntosVenta.map(p => [p.lat, p.lng]));
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    </script>
+</body>
+</html>
